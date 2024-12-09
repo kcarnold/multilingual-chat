@@ -9,16 +9,17 @@ if 'client' not in st.session_state:
 # Initialize session state variables
 if 'messages' not in st.session_state:
     st.session_state.messages = []
+if 'languages' not in st.session_state:
+    st.session_state.languages = ["English", "Spanish", "Haitian Creole"]
 
-system_message = """The following is a multilingual conversation. Each user message is from a person in the conversation. 
+def get_system_message():
+    langs = ", ".join(st.session_state.languages)
+    return f"""The following is a multilingual conversation. Each user message is from a person in the conversation. 
 The assistant then provides a translation of the message in the remaining languages.
-The languages in this conversation are: English, Spanish, Haitian Creole.
+The languages in this conversation are: {langs}.
 
 Format your response as plain text with each translation on a new line:
-
-- **English**: {translation}
-- **Spanish**: {translation}
-- **Haitian Creole**: {translation}
+{chr(10).join([f'- **{lang}**: {{translation}}' for lang in st.session_state.languages])}
 
 Don't include a line for the source language.
 
@@ -32,7 +33,7 @@ Important:
 
 # Page config
 st.set_page_config(page_title="Multilingual Chat", page_icon="🌎")
-st.title("Multilingual Chat 🌎")
+st.title("Multilingual Chat")
 
 # Language selector
 LANGUAGES = ["English", "Spanish", "Haitian Creole"]
@@ -64,7 +65,7 @@ if prompt := st.chat_input("Type your message here"):
                 stream = st.session_state.client.messages.stream(
                     model="claude-3-5-haiku-20241022",
                     messages=st.session_state.messages,
-                    system=system_message,
+                    system=get_system_message(),  # Use dynamic system message
                     max_tokens=1000,
                     temperature=0.7
                 )
@@ -86,12 +87,27 @@ if prompt := st.chat_input("Type your message here"):
 
 # Sidebar options
 with st.sidebar:
+    st.markdown("### Languages")
+    
+    # Language management
+    new_lang = st.text_input("Add new language:")
+    if st.button("Add Language") and new_lang and new_lang not in st.session_state.languages:
+        st.session_state.languages.append(new_lang)
+        st.rerun()
+    
+    # Display current languages with remove buttons
+    for lang in st.session_state.languages:
+        col1, col2 = st.columns([3, 1])
+        col1.write(lang)
+        if col2.button("🗑️", key=f"remove_{lang}") and len(st.session_state.languages) > 2:
+            st.session_state.languages.remove(lang)
+            st.rerun()
+    
+    st.markdown("---")
     st.markdown("### About")
     st.markdown("""
-    This app enables multilingual conversations with automatic translation between:
-    - English 🇺🇸
-    - Spanish 🇪🇸
-    - Haitian Creole 🇭🇹
+    This app enables multilingual conversations with automatic translation between 
+    the selected languages.
     
     Messages are translated while preserving context and tone.
     """)
