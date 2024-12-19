@@ -19,7 +19,8 @@ The assistant then provides a translation of the message in the remaining langua
 The languages in this conversation are: {langs}.
 
 Format your response as plain text with each translation on a new line:
-{chr(10).join([f'- **{lang}**: {{translation}}' for lang in st.session_state.languages])}
+
+{'\n'.join([f'- **{lang}**: {{translation}}' for lang in st.session_state.languages])}
 
 Don't include a line for the source language.
 
